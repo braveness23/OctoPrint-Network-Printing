@@ -61,16 +61,28 @@ class NetworkPrintingPlugin(
                 error_msg = f"DNS resolution failed for {hostname}: {e}"
                 self._logger.error(error_msg)
                 machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                machinecom_self._dual_log(
+                    "Aborting connection attempt due to DNS failure",
+                    level=logging.ERROR,
+                )
                 return None
             except socket.timeout:
                 error_msg = f"Connection timeout after {connection_timeout}s to {hostname}:{port_number}"
                 self._logger.error(error_msg)
                 machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                machinecom_self._dual_log(
+                    "Aborting connection attempt due to timeout",
+                    level=logging.ERROR,
+                )
                 return None
             except OSError as e:
                 error_msg = f"Connection refused to {hostname}:{port_number}: {e}"
                 self._logger.error(error_msg)
                 machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                machinecom_self._dual_log(
+                    "Aborting connection attempt - host unreachable or port closed",
+                    level=logging.ERROR,
+                )
                 return None
                 
         except Exception as e:
