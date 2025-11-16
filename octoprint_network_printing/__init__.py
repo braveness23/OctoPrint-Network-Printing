@@ -26,8 +26,11 @@ class NetworkPrintingPlugin(
     def get_serial_factory(
         self, machinecom_self, port: str, baudrate: int, timeout_s: int
     ):
+        import time
+        attempt_id = int(time.time() * 1000) % 100000  # Unique ID for this attempt
+        
         self._logger.info(
-            f"Attempting network connection: port={port}, baudrate={baudrate}, timeout={timeout_s}s"
+            f"[Attempt #{attempt_id}] Network connection request: port={port}, baudrate={baudrate}, timeout={timeout_s}s"
         )
 
         # check for network uri
@@ -69,9 +72,10 @@ class NetworkPrintingPlugin(
                     level=logging.ERROR,
                 )
                 machinecom_self._dual_log(
-                    "Aborting connection attempt due to DNS failure",
+                    f"[Attempt #{attempt_id}] ABORTING - DNS failure",
                     level=logging.ERROR,
                 )
+                self._logger.info(f"[Attempt #{attempt_id}] Returning None, will not attempt connection")
                 return None
             
             # Step 2: Test TCP port connectivity
@@ -136,9 +140,9 @@ class NetworkPrintingPlugin(
             return None
 
         # All pre-flight checks passed, proceed with serial connection
-        self._logger.info(f"All pre-flight checks passed, establishing serial connection...")
+        self._logger.info(f"[Attempt #{attempt_id}] All pre-flight checks passed, establishing serial connection...")
         machinecom_self._dual_log(
-            "Connecting to port {}, baudrate {}".format(port, baudrate),
+            f"[Attempt #{attempt_id}] Connecting to port {{0}}, baudrate {{1}}".format(port, baudrate),
             level=logging.INFO,
         )
 
