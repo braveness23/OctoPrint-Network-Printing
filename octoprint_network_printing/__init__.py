@@ -74,17 +74,10 @@ class NetworkPrintingPlugin(
                 )
                 return None
             
-            # Step 2: Test network reachability (ICMP ping simulation using TCP)
-            self._logger.info(f"Step 2/3: Testing network reachability to {ip_address}...")
+            # Step 2: Test TCP port connectivity
+            self._logger.info(f"Step 2/2: Testing TCP connection to {ip_address}:{port_number} (timeout: {connection_timeout}s)...")
             machinecom_self._dual_log(
-                f"Testing reachability to {ip_address}...",
-                level=logging.INFO,
-            )
-            
-            # Step 3: Test TCP port connectivity
-            self._logger.info(f"Step 3/3: Testing TCP connection to {ip_address}:{port_number} (timeout: {connection_timeout}s)...")
-            machinecom_self._dual_log(
-                f"Testing port {port_number}...",
+                f"Testing connection to {hostname}:{port_number}...",
                 level=logging.INFO,
             )
             
