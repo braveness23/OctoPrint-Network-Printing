@@ -1,14 +1,12 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-import os
 import serial
 import logging
 from typing import List
 
 import octoprint.plugin
 from octoprint.settings import settings
-from octoprint.util.platform import get_os, set_close_exec
 from octoprint.util.comm import BufferedReadlineWrapper
 
 
@@ -16,22 +14,25 @@ class NetworkPrintingPlugin(
     octoprint.plugin.TemplatePlugin,
     octoprint.plugin.StartupPlugin,
 ):
-    def get_port_names(self, candidates) -> List[str]:
+    def get_port_names(self, candidates):
+        """Return list of network ports from additional serial ports configuration"""
         additionalPorts = settings().get(["serial", "additionalPorts"])
-        return [port for port in additionalPorts if "://" in port]
+        network_ports = [port for port in additionalPorts if "://" in port]
+        self._logger.debug(f"Discovered network ports: {network_ports}")
+        return network_ports
 
     def get_serial_factory(
         self, machinecom_self, port: str, baudrate: int, timeout_s: int
     ):
         self._logger.info(
-            f"machinecom_self: {machinecom_self}, port: {port}, baudrate: {baudrate}, timeout_s: {timeout_s}"
+            f"Attempting network connection: port={port}, baudrate={baudrate}, timeout={timeout_s}s"
         )
 
         # check for rfc2217 uri
-        if not "://" in port:
+        if "://" not in port:
             return None
 
-        # connect to regular serial port
+        # connect to network serial port
         machinecom_self._dual_log(
             "Connecting to port {}, baudrate {}".format(port, baudrate),
             level=logging.INFO,
@@ -43,8 +44,17 @@ class NetworkPrintingPlugin(
             "write_timeout": 0,
         }
 
-        serial_obj = serial.serial_for_url(str(port), **serial_port_args)
-        return BufferedReadlineWrapper(serial_obj)
+        try:
+            serial_obj = serial.serial_for_url(str(port), **serial_port_args)
+            self._logger.info(f"Successfully connected to {port}")
+            return BufferedReadlineWrapper(serial_obj)
+        except Exception as e:
+            self._logger.error(f"Failed to connect to {port}: {e}")
+            machinecom_self._dual_log(
+                f"Network connection failed: {e}",
+                level=logging.ERROR,
+            )
+            return None
 
     def get_update_information(self):
         # See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html for details.
