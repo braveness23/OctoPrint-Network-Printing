@@ -135,7 +135,8 @@ class NetworkPrintingPlugin(
             machinecom_self._dual_log(error_msg, level=logging.ERROR)
             return None
 
-        # connect to network serial port
+        # All pre-flight checks passed, proceed with serial connection
+        self._logger.info(f"All pre-flight checks passed, establishing serial connection...")
         machinecom_self._dual_log(
             "Connecting to port {}, baudrate {}".format(port, baudrate),
             level=logging.INFO,
