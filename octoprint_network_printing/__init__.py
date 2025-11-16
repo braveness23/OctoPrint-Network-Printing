@@ -54,11 +54,11 @@ class NetworkPrintingPlugin(
                 displayVersion=self._plugin_version,
                 # version check: github repository
                 type="github_release",
-                user="hellerbarde",
+                user="braveness23",
                 repo="OctoPrint-Network-Printing",
                 current=self._plugin_version,
                 # update method: pip
-                pip="https://github.com/hellerbarde/OctoPrint-Network-Printing/archive/{target_version}.zip",
+                pip="https://github.com/braveness23/OctoPrint-Network-Printing/archive/{target_version}.zip",
             )
         )
 

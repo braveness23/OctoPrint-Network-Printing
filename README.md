@@ -20,7 +20,7 @@ RFC2217 correctly. Please open an issue to let me know if you become aware of on
 Install via the bundled [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
 or manually using this URL:
 
-    https://github.com/hellerbarde/OctoPrint-Network-Printing/archive/main.zip
+    https://github.com/braveness23/OctoPrint-Network-Printing/archive/main.zip
 
 After installation, follow the Configuration section below to set up the address of your printer.
 
