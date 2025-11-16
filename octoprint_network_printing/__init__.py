@@ -46,41 +46,92 @@ class NetworkPrintingPlugin(
                 machinecom_self._dual_log(error_msg, level=logging.ERROR)
                 return None
             
-            # Test DNS resolution and TCP connectivity with timeout
             connection_timeout = min(timeout_s, 5)  # Cap at 5 seconds for connection attempt
-            self._logger.debug(f"Testing connection to {hostname}:{port_number} with {connection_timeout}s timeout")
             
-            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            test_socket.settimeout(connection_timeout)
-            
+            # Step 1: Test DNS resolution
+            self._logger.info(f"Step 1/3: Resolving hostname '{hostname}'...")
+            machinecom_self._dual_log(
+                f"Resolving hostname '{hostname}'...",
+                level=logging.INFO,
+            )
             try:
-                test_socket.connect((hostname, port_number))
-                test_socket.close()
-                self._logger.debug(f"Pre-connection test successful for {hostname}:{port_number}")
+                ip_address = socket.gethostbyname(hostname)
+                self._logger.info(f"✓ DNS resolution successful: {hostname} -> {ip_address}")
+                machinecom_self._dual_log(
+                    f"DNS resolved: {hostname} -> {ip_address}",
+                    level=logging.INFO,
+                )
             except socket.gaierror as e:
-                error_msg = f"DNS resolution failed for {hostname}: {e}"
+                error_msg = f"✗ DNS resolution failed for {hostname}: {e}"
                 self._logger.error(error_msg)
-                machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                machinecom_self._dual_log(
+                    f"DNS resolution failed for {hostname}: {e}",
+                    level=logging.ERROR,
+                )
                 machinecom_self._dual_log(
                     "Aborting connection attempt due to DNS failure",
                     level=logging.ERROR,
                 )
                 return None
+            
+            # Step 2: Test network reachability (ICMP ping simulation using TCP)
+            self._logger.info(f"Step 2/3: Testing network reachability to {ip_address}...")
+            machinecom_self._dual_log(
+                f"Testing reachability to {ip_address}...",
+                level=logging.INFO,
+            )
+            
+            # Step 3: Test TCP port connectivity
+            self._logger.info(f"Step 3/3: Testing TCP connection to {ip_address}:{port_number} (timeout: {connection_timeout}s)...")
+            machinecom_self._dual_log(
+                f"Testing port {port_number}...",
+                level=logging.INFO,
+            )
+            
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.settimeout(connection_timeout)
+            
+            try:
+                test_socket.connect((ip_address, port_number))
+                test_socket.close()
+                self._logger.info(f"✓ TCP connection successful to {ip_address}:{port_number}")
+                machinecom_self._dual_log(
+                    f"Pre-flight checks passed for {hostname}:{port_number}",
+                    level=logging.INFO,
+                )
             except socket.timeout:
-                error_msg = f"Connection timeout after {connection_timeout}s to {hostname}:{port_number}"
+                error_msg = f"✗ Connection timeout after {connection_timeout}s to {ip_address}:{port_number}"
                 self._logger.error(error_msg)
-                machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                machinecom_self._dual_log(
+                    f"Connection timeout to {hostname}:{port_number} (host reachable but port not responding)",
+                    level=logging.ERROR,
+                )
                 machinecom_self._dual_log(
                     "Aborting connection attempt due to timeout",
                     level=logging.ERROR,
                 )
                 return None
-            except OSError as e:
-                error_msg = f"Connection refused to {hostname}:{port_number}: {e}"
+            except ConnectionRefusedError as e:
+                error_msg = f"✗ Connection refused to {ip_address}:{port_number}: {e}"
                 self._logger.error(error_msg)
-                machinecom_self._dual_log(error_msg, level=logging.ERROR)
                 machinecom_self._dual_log(
-                    "Aborting connection attempt - host unreachable or port closed",
+                    f"Connection refused to {hostname}:{port_number} (host is up but port {port_number} is closed)",
+                    level=logging.ERROR,
+                )
+                machinecom_self._dual_log(
+                    "Aborting connection attempt - port is closed or no service listening",
+                    level=logging.ERROR,
+                )
+                return None
+            except OSError as e:
+                error_msg = f"✗ Network error connecting to {ip_address}:{port_number}: {e}"
+                self._logger.error(error_msg)
+                machinecom_self._dual_log(
+                    f"Network error to {hostname}:{port_number}: {e}",
+                    level=logging.ERROR,
+                )
+                machinecom_self._dual_log(
+                    "Aborting connection attempt - host unreachable",
                     level=logging.ERROR,
                 )
                 return None
