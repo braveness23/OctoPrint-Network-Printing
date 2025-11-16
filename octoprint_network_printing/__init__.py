@@ -3,7 +3,9 @@ from __future__ import absolute_import
 
 import serial
 import logging
+import socket
 from typing import List
+from urllib.parse import urlparse
 
 import octoprint.plugin
 from octoprint.settings import settings
@@ -28,8 +30,53 @@ class NetworkPrintingPlugin(
             f"Attempting network connection: port={port}, baudrate={baudrate}, timeout={timeout_s}s"
         )
 
-        # check for rfc2217 uri
+        # check for network uri
         if "://" not in port:
+            return None
+
+        # Parse the URL to extract hostname and port
+        try:
+            parsed = urlparse(port)
+            hostname = parsed.hostname
+            port_number = parsed.port
+            
+            if not hostname or not port_number:
+                error_msg = f"Invalid URL format: {port} (missing hostname or port)"
+                self._logger.error(error_msg)
+                machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                return None
+            
+            # Test DNS resolution and TCP connectivity with timeout
+            connection_timeout = min(timeout_s, 5)  # Cap at 5 seconds for connection attempt
+            self._logger.debug(f"Testing connection to {hostname}:{port_number} with {connection_timeout}s timeout")
+            
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.settimeout(connection_timeout)
+            
+            try:
+                test_socket.connect((hostname, port_number))
+                test_socket.close()
+                self._logger.debug(f"Pre-connection test successful for {hostname}:{port_number}")
+            except socket.gaierror as e:
+                error_msg = f"DNS resolution failed for {hostname}: {e}"
+                self._logger.error(error_msg)
+                machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                return None
+            except socket.timeout:
+                error_msg = f"Connection timeout after {connection_timeout}s to {hostname}:{port_number}"
+                self._logger.error(error_msg)
+                machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                return None
+            except OSError as e:
+                error_msg = f"Connection refused to {hostname}:{port_number}: {e}"
+                self._logger.error(error_msg)
+                machinecom_self._dual_log(error_msg, level=logging.ERROR)
+                return None
+                
+        except Exception as e:
+            error_msg = f"Failed to parse URL {port}: {e}"
+            self._logger.error(error_msg)
+            machinecom_self._dual_log(error_msg, level=logging.ERROR)
             return None
 
         # connect to network serial port
@@ -49,7 +96,7 @@ class NetworkPrintingPlugin(
             self._logger.info(f"Successfully connected to {port}")
             return BufferedReadlineWrapper(serial_obj)
         except Exception as e:
-            self._logger.error(f"Failed to connect to {port}: {e}")
+            self._logger.error(f"Failed to establish serial connection to {port}: {e}")
             machinecom_self._dual_log(
                 f"Network connection failed: {e}",
                 level=logging.ERROR,

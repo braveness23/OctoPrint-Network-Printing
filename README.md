@@ -1,9 +1,8 @@
-## IMPORTANT!
+## IMPORTANT
 
-if your network is not stable, this plugin might not be for you. I have had good experiences with it so far, 
+if your network is not stable, this plugin might not be for you. I have had good experiences with it so far,
 but if there are interruptions in network traffic, your print might stop or be jittery, resulting in printing irregularities.
 I take no responsibility for any failed prints or worse.
-
 
 # OctoPrint-Network-Printing
 
@@ -11,9 +10,8 @@ OctoPrint-Network-Printing enables OctoPrint to use the Python-internal serial-o
 a 3d printer over the network, or even WiFi.
 
 It supports both RFC2217, and raw TCP socket protocols. The raw TCP socket protocol works with the ESP3D project,
-if that is of interest. At the time of writing, I am not aware of any ESP32 or ESP8266 projects that implement 
-RFC2217 correctly. Please open an issue to let me know if you become aware of one. 
-
+if that is of interest. At the time of writing, I am not aware of any ESP32 or ESP8266 projects that implement
+RFC2217 correctly. Please open an issue to let me know if you become aware of one.
 
 ## Setup
 
@@ -23,7 +21,6 @@ or manually using this URL:
     https://github.com/braveness23/OctoPrint-Network-Printing/archive/main.zip
 
 After installation, follow the Configuration section below to set up the address of your printer.
-
 
 ## Configuration
 
